@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Quiz</title>
+<style>
+/* One centered column: question card, then results with the card picker. */
+:root{
+  --bg:#f3f4f8; --surface:#fff; --ink:#1b1d33; --muted:#5d6180; --line:#dcdeea;
+  --accent:#d1006f; --accent-soft:#fbe3ef; --good:#13795b; --good-soft:#ddf3ea; --bad:#b42318; --bad-soft:#fde6e3;
+  --sans:-apple-system,"Helvetica Neue",system-ui,sans-serif; --serif:"Iowan Old Style",Palatino,Georgia,serif; --mono:ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12131f; --surface:#1c1e2e; --ink:#ecedf6; --muted:#9ea2c0; --line:#2e3148;
+  --accent:#ff5ca8; --accent-soft:#3a1a2e; --good:#4ed3a2; --good-soft:#123227; --bad:#ff8a7a; --bad-soft:#3a1c1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12131f; --surface:#1c1e2e; --ink:#ecedf6; --muted:#9ea2c0; --line:#2e3148;
+  --accent:#ff5ca8; --accent-soft:#3a1a2e; --good:#4ed3a2; --good-soft:#123227; --bad:#ff8a7a; --bad-soft:#3a1c1a; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.5 var(--serif);padding:0 16px}
+.wrap{max-width:680px;margin:0 auto;padding:28px 0 64px}
+h1{font:800 clamp(1.6rem,5vw,2.2rem)/1.1 var(--sans);margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 20px;font-size:.95rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.top{display:flex;justify-content:space-between;font:500 .8rem var(--mono);color:var(--muted);margin-bottom:10px;font-variant-numeric:tabular-nums}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:18px}.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.kind{font:500 .7rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.prompt{font-size:clamp(1.15rem,4vw,1.4rem);margin:6px 0 4px}
+.blank{display:inline-block;min-width:3.5em;border-bottom:2px solid var(--accent);color:var(--accent)}
+.hint{color:var(--muted);font-style:italic;margin-bottom:14px}
+input[type=text]{width:100%;font:inherit;font-size:1.05rem;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.opts{display:grid;gap:8px;margin-top:8px}
+.opt{text-align:left;font:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;color:var(--ink)}
+.opt:hover{border-color:var(--accent)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+button.primary{font:700 1rem var(--sans);background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
+button.ghost{font:600 .95rem var(--sans);background:none;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.score{font:800 3.2rem/1 var(--sans);color:var(--accent);font-variant-numeric:tabular-nums}
+.list{list-style:none;padding:0;margin:16px 0 0}
+.list li{padding:10px 0;border-top:1px solid var(--line);display:flex;gap:10px}
+.mark{flex:none;width:1.4em;font-weight:700}.ok{color:var(--good)}.no{color:var(--bad)}
+.ans{color:var(--muted);font-size:.92rem}
+.note{font:500 .75rem var(--mono);color:var(--accent)}
+h2{font:700 1.15rem var(--sans);margin:26px 0 4px}
+.pick label{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.pick input{margin-top:.35em;accent-color:var(--accent);width:18px;height:18px}
+.tag{font:500 .7rem var(--mono);color:var(--muted)}
+.msg{padding:12px 14px;border-radius:10px;margin-top:14px}.msg.good{background:var(--good-soft);color:var(--good)}.msg.bad{background:var(--bad-soft);color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="sub" id="sub">Answer each one. You'll pick which ones become cards at the end.</p>
+  <div id="app"></div>
+</div>
+<script id="data" type="application/json">/*DATA*/</script>
+<script>
+const data = JSON.parse(document.getElementById('data').textContent);
+const qs = data.questions;
+const given = {};
+let idx = 0;
+const app = document.getElementById('app');
+document.getElementById('title').textContent = data.title || 'Quiz';
+document.title = (data.title || 'Quiz') + ' · Quiz';
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) n.append(k);
+  return n;
+}
+function promptNode(text) {
+  const p = el('div', {class: 'prompt'});
+  text.split('___').forEach((part, i, arr) => {
+    p.append(part);
+    if (i < arr.length - 1) p.append(el('span', {class: 'blank', text: ' '}));
+  });
+  return p;
+}
+
+function showQuestion() {
+  const q = qs[idx];
+  app.replaceChildren();
+  const card = el('div', {class: 'card'},
+    el('div', {class: 'top'}, el('span', {text: `${idx + 1} / ${qs.length}`}), el('span', {text: q.type === 'choice' ? 'Elige' : 'Completa'})),
+    el('div', {class: 'bar'}, el('i', {style: `width:${(idx / qs.length) * 100}%`})),
+    promptNode(q.prompt),
+    q.hint ? el('div', {class: 'hint', text: q.hint}) : null);
+  const next = el('button', {class: 'primary', text: idx === qs.length - 1 ? 'Finish' : 'Next', onclick: advance});
+  if (q.type === 'choice') {
+    const opts = el('div', {class: 'opts'});
+    q.options.forEach(o => opts.append(el('button', {class: 'opt', 'aria-pressed': String(given[q.id] === o), text: o,
+      onclick: () => { given[q.id] = o; advance(); }})));
+    card.append(opts);
+  } else {
+    const input = el('input', {type: 'text', lang: 'es', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false',
+      placeholder: 'escribe la palabra…', onkeydown: e => { if (e.key === 'Enter') advance(); }});
+    input.value = given[q.id] || '';
+    input.addEventListener('input', () => given[q.id] = input.value);
+    card.append(input);
+    setTimeout(() => input.focus(), 0);
+  }
+  card.append(el('div', {class: 'row'},
+    idx > 0 ? el('button', {class: 'ghost', text: 'Back', onclick: () => { idx--; showQuestion(); }}) : null,
+    next));
+  app.append(card);
+}
+
+function advance() {
+  if (idx < qs.length - 1) { idx++; showQuestion(); } else finish();
+}
+
+async function post(path, body) {
+  const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  if (!r.ok) throw new Error((await r.json()).errors?.join('\n') || r.statusText);
+  return r.json();
+}
+
+async function finish() {
+  let results;
+  try { results = await post('/grade', {given}); }
+  catch (e) { app.append(el('div', {class: 'msg bad', text: 'This saved copy can’t be graded. Run /study again to take the quiz live.'})); return; }
+  showResults(results);
+}
+
+function showResults(results) {
+  document.getElementById('sub').textContent = 'Missed items are ticked. Tick anything else you want as a card.';
+  const byId = Object.fromEntries(results.answers.map(a => [a.id, a]));
+  const list = el('ul', {class: 'list'});
+  for (const q of qs) {
+    const a = byId[q.id];
+    list.append(el('li', {},
+      el('span', {class: 'mark ' + (a.correct ? 'ok' : 'no'), text: a.correct ? '✓' : '✗'}),
+      el('div', {}, q.prompt.replace('___', q.answer),
+        el('div', {class: 'ans', text: a.correct ? (a.accent_only ? `You wrote “${a.given}”. Watch the accent: ${q.answer}` : '') : `You: ${a.given || '(blank)'} · Answer: ${q.answer}`}))));
+  }
+  const items = [...new Set(qs.map(q => q.item))];
+  const missed = new Set(results.keep);
+  const pick = el('div', {class: 'pick'});
+  for (const it of items) {
+    const box = el('input', {type: 'checkbox', value: it});
+    box.checked = missed.has(it);
+    pick.append(el('label', {}, box, el('span', {}, it, ' ', el('span', {class: 'tag', text: missed.has(it) ? 'missed' : 'got it'}))));
+  }
+  const send = el('button', {class: 'primary', text: 'Done → make cards'});
+  const status = el('div');
+  send.addEventListener('click', async () => {
+    send.disabled = true;
+    results.keep = [...pick.querySelectorAll('input:checked')].map(i => i.value);
+    try {
+      await post('/submit', {results});
+      status.replaceChildren(el('div', {class: 'msg good', text: `Sent ${results.keep.length} items. Head back to Claude for the draft cards.`}));
+    } catch (e) {
+      send.disabled = false;
+      status.replaceChildren(el('div', {class: 'msg bad', text: 'Couldn’t reach Claude’s helper. Is /study still running?'}));
+    }
+  });
+  app.replaceChildren(el('div', {class: 'card'},
+    el('div', {class: 'score', text: `${results.score} / ${results.total}`}), list,
+    el('h2', {text: 'Make cards from'}), pick, el('div', {class: 'row'}, send), status));
+}
+
+showQuestion();
+</script>
+</body>
+</html>

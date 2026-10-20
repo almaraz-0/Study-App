@@ -4,3 +4,4 @@
 backups/
 notes/**/screenshots/
 __pycache__/
+.playwright-mcp/
