@@ -66,8 +66,14 @@ class FakeAnki:
                     field = next((v for k, v in note["fields"].items() if k.lower() == key), None)
                     ok = field is not None and field.lower() == _unescape(value).lower()
             else:
-                term = _unescape(quoted if quoted else bare).lower()
-                ok = any(term in v.lower() for v in note["fields"].values())
+                raw = quoted if quoted else bare
+                fm = re.match(r"^(\w+):(.*)$", raw)
+                if fm:  # quoted field search: "Word:me da pena"
+                    field = next((v for k, v in note["fields"].items() if k.lower() == fm.group(1).lower()), None)
+                    ok = field is not None and field.lower() == _unescape(fm.group(2)).lower()
+                else:
+                    term = _unescape(raw).lower()
+                    ok = any(term in v.lower() for v in note["fields"].values())
             if bool(neg) == ok:
                 return False
         return True
