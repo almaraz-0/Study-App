@@ -76,3 +76,57 @@ def test_one_failure_doesnt_stop_others(fake_anki):
     results = push(anki, approved(d2, GRAMMAR), "spanish", already=set())
     assert results[0]["error"] and results[0]["note_id"] is None
     assert results[1]["error"] is None and results[1]["note_id"]
+
+
+def test_merge_into_deleted_note_is_an_error_not_a_crash(fake_anki):
+    anki = Anki(transport=fake_anki)
+    d2 = dict(copy.deepcopy(VOCAB), id="v2", action="merge", match_note_id=424242)
+    results = push(anki, approved(VOCAB, d2), "spanish", already=set(), run_id="r1")
+    assert results[0]["error"] is None
+    assert results[1]["error"] and "424242" in results[1]["error"]
+
+
+def test_rerun_without_record_does_not_duplicate(fake_anki):
+    anki = Anki(transport=fake_anki)
+    push(anki, approved(VOCAB), "spanish", already=set(), run_id="r1")
+    # pushed.json lost (crash before it was written): the run tag still finds the note
+    [r] = push(anki, approved(VOCAB), "spanish", already=set(), run_id="r1")
+    assert r["error"] is None
+    assert [a for a, _ in fake_anki.calls].count("addNote") == 1
+    assert sum(1 for n in fake_anki.notes.values() if n["fields"].get("Word") == "abrumado") == 1
+
+
+def test_lost_reply_after_add_does_not_duplicate(fake_anki):
+    anki = Anki(transport=fake_anki)
+    fake_anki.lose_reply = {"addNote"}
+    [first] = push(anki, approved(VOCAB), "spanish", already=set(), run_id="r1")
+    assert first["error"]
+    fake_anki.lose_reply = set()
+    [second] = push(anki, approved(VOCAB), "spanish", already=set(), run_id="r1")
+    assert second["error"] is None and second["note_id"]
+    assert sum(1 for n in fake_anki.notes.values() if n["fields"].get("Word") == "abrumado") == 1
+
+
+def test_merge_rerun_does_not_append_twice(fake_anki):
+    nid, _ = fake_anki.add("Learn::Spanish::Vocab", {"Word": "abrumado", "Examples": "<ul><li>old</li></ul>"}, model=config.VOCAB_MODEL)
+    d = dict(copy.deepcopy(VOCAB), action="merge", match_note_id=nid)
+    anki = Anki(transport=fake_anki)
+    push(anki, approved(d), "spanish", already=set(), run_id="r1")
+    push(anki, approved(d), "spanish", already=set(), run_id="r1")
+    assert fake_anki.notes[nid]["fields"]["Examples"].count("<li>") == 2
+
+
+def test_results_reported_as_they_happen(fake_anki):
+    seen = []
+    push(Anki(transport=fake_anki), approved(VOCAB, GRAMMAR), "spanish", already=set(), run_id="r1", on_result=seen.append)
+    assert [r["draft_id"] for r in seen] == ["v1", "g1"]
+
+
+def test_main_refuses_while_another_push_runs(tmp_path, monkeypatch):
+    import fcntl, json as _json
+    from studyhelper import push as push_mod
+    (tmp_path / "approved.json").write_text(_json.dumps(approved(VOCAB)))
+    with open(tmp_path / ".push.lock", "w") as held:
+        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        monkeypatch.setattr(push_mod, "push", lambda *a, **k: pytest.fail("pushed while locked"))
+        assert push_mod.main([str(tmp_path)]) == 1

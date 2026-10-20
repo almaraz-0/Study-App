@@ -113,6 +113,15 @@ def normalize_tags(tags) -> list[str]:
     return out
 
 
+def slug_tag(prefix: str, text: str) -> str:
+    return prefix + re.sub(r"[^\w]+", "_", text.strip().lower()).strip("_")
+
+
+def rule_tag(rule_key: str) -> str:
+    """Tag that identifies a grammar rule, so duplicate checks can find it later."""
+    return slug_tag("rule::", rule_key)
+
+
 def to_anki_note(d: dict, subject: str) -> dict:
     if d["kind"] == "vocab":
         model = config.VOCAB_MODEL
@@ -124,7 +133,7 @@ def to_anki_note(d: dict, subject: str) -> dict:
         "deckName": config.DECKS[subject][d["kind"]],
         "modelName": model,
         "fields": fields,
-        "tags": normalize_tags(d.get("tags")),
+        "tags": normalize_tags(list(d.get("tags") or []) + ([rule_tag(d["rule_key"])] if d["kind"] == "grammar" else [])),
         # Duplicate control is dedupe's job: a new meaning of the same word is allowed.
         "options": {"allowDuplicate": True},
     }

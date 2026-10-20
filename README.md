@@ -22,7 +22,7 @@ Material you've already studied gets a quiz first. Brand-new words go straight t
 
 - `Learn::Spanish::Vocab`, `Learn::Spanish::Grammar`: active study.
 - `Archive::…`: the old collection, suspended. Unsuspend anything from the Anki browser.
-- Tags: `source::book::chNN`, `source::chatgpt`, `source::youtube`, `source::words`, `source::legacy`, plus topics.
+- Tags: `source::book::chNN`, `source::chatgpt`, `source::youtube`, `source::words`, `source::legacy`, plus topics. Grammar notes get `rule::<rule>`, and every added note gets a `sh::<run>::<id>` tag so re-running a push never duplicates it.
 
 To stop making the Spanish → meaning card for new words, set `RECOGNIZE_CARDS = False` in `studyhelper/config.py`.
 

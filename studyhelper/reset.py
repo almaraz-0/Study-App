@@ -71,6 +71,11 @@ def apply_reset(anki: Anki, plan: ResetPlan) -> None:
             anki.invoke("deleteDecks", decks=[deck], cardsToo=True)
 
 
+def already_reset(deck_names: list[str]) -> bool:
+    has_learn = any(d.startswith(config.LEARN_PREFIX) for d in deck_names)
+    return has_learn and not any(d in deck_names for d in config.KEEP_DECKS)
+
+
 def gather(anki: Anki) -> ResetPlan:
     by_deck = anki.invoke("getDecks", cards=anki.invoke("findCards", query="deck:*"))
     keep_cards = [c for d in config.KEEP_DECKS for c in by_deck.get(d, [])]
@@ -81,6 +86,7 @@ def gather(anki: Anki) -> ResetPlan:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--apply", action="store_true", help="make the changes (after a backup)")
+    ap.add_argument("--force", action="store_true", help="apply even though the reset already ran")
     args = ap.parse_args(argv)
     anki = Anki()
     try:
@@ -90,6 +96,13 @@ def main(argv=None) -> int:
         if not args.apply:
             print("\nDry run. Nothing changed. Re-run with --apply to make these changes.")
             return 0
+        if already_reset(anki.invoke("deckNames")) and not args.force:
+            print(
+                "\nThe reset already ran (Learn:: exists and the old decks are gone). Applying again would "
+                "archive and suspend any deck you've added since. Use --force if you really mean it.",
+                file=sys.stderr,
+            )
+            return 1
         expected = len(anki.invoke("findNotes", query="deck:*"))
         backup = backup_collection(config.COLLECTION_PATH, config.BACKUPS_DIR, expected)
         apply_reset(anki, plan)

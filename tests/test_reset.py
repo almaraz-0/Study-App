@@ -1,3 +1,4 @@
+import pytest
 from studyhelper import config
 from studyhelper.anki import Anki
 from studyhelper.reset import Move, ResetPlan, apply_reset, format_plan, plan_reset
@@ -75,3 +76,13 @@ def test_apply_tags_legacy_notes(fake_anki):
     apply_reset(anki, plan)
     legacy = [n for n in fake_anki.notes.values() if config.LEGACY_TAG in n["tags"]]
     assert [n["fields"]["Front"] for n in legacy] == ["aparecer"]
+
+
+def test_apply_refuses_rerun_without_force(fake_anki, monkeypatch):
+    from studyhelper import reset
+    fake_anki.add("Learn::Spanish::Vocab", {"Front": "x"})
+    fake_anki.add("Guitar", {"Front": "G chord"})
+    monkeypatch.setattr(reset, "Anki", lambda: Anki(transport=fake_anki))
+    monkeypatch.setattr(reset, "backup_collection", lambda *a: pytest.fail("should not back up"))
+    assert reset.main(["--apply"]) == 1
+    assert all(c["deck"] != "Archive::Guitar" for c in fake_anki.cards.values())

@@ -40,3 +40,9 @@ def test_grade_blank_is_wrong():
 def test_grade_choice_exact():
     assert by_id(grade(QUIZ, {"q3": "da"}))["q3"]["correct"] is True
     assert by_id(grade(QUIZ, {"q3": "Da "}))["q3"]["correct"] is False
+
+
+def test_enye_is_a_letter_not_an_accent():
+    quiz = {"questions": [{"id": "q", "type": "cloze", "prompt": "Feliz ___ nuevo.", "hint": None, "answer": "año", "item": "año"}]}
+    a = by_id(grade(quiz, {"q": "ano"}))["q"]
+    assert a["correct"] is False

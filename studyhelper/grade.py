@@ -1,4 +1,7 @@
-"""Grade quiz answers. Case never matters; a missing accent counts but is flagged."""
+"""Grade quiz answers. Case never matters; a missing written accent (á é í ó ú) counts but is flagged.
+
+ñ and ü are distinct letters, not accents: año ≠ ano.
+"""
 
 import unicodedata
 
@@ -8,7 +11,8 @@ def _norm(s: str) -> str:
 
 
 def _strip_accents(s: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFD", s) if not unicodedata.combining(c))
+    decomposed = unicodedata.normalize("NFD", s)
+    return unicodedata.normalize("NFC", decomposed.replace("\u0301", ""))
 
 
 def grade(quiz: dict, given: dict[str, str]) -> dict:

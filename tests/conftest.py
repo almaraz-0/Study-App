@@ -22,6 +22,7 @@ class FakeAnki:
         self.calls = []
         self.down = False
         self.fail_actions = set()
+        self.lose_reply = set()  # actions that succeed but whose reply never arrives
         self._ids = itertools.count(1000)
 
     # ---- test helpers -------------------------------------------------
@@ -90,6 +91,8 @@ class FakeAnki:
             result = getattr(self, "_" + action)(**params)
         except Exception as e:  # mirror AnkiConnect: errors come back in the body
             return {"result": None, "error": str(e)}
+        if action in self.lose_reply:
+            raise TimeoutError("reply lost")
         return {"result": result, "error": None}
 
     def _version(self):
@@ -155,6 +158,9 @@ class FakeAnki:
     def _notesInfo(self, notes):
         out = []
         for nid in notes:
+            if nid not in self.notes:  # real AnkiConnect returns {} for a missing note
+                out.append({})
+                continue
             n = self.notes[nid]
             out.append({
                 "noteId": nid,

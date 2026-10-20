@@ -9,6 +9,7 @@ from typing import Literal
 
 from studyhelper import config
 from studyhelper.anki import Anki, AnkiError
+from studyhelper.drafts import rule_tag
 
 
 @dataclass
@@ -50,7 +51,7 @@ def _queries(draft: dict) -> list[tuple[str, str]]:
         ]
     key = draft["rule_key"]
     return [
-        ("grammar", f'note:"{config.GRAMMAR_MODEL}" {quote(key)}'),
+        ("grammar", f'note:"{config.GRAMMAR_MODEL}" tag:{rule_tag(key)}'),
         ("archive", f"{archive} {quote(key)}"),
     ]
 

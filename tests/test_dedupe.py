@@ -47,8 +47,9 @@ def test_archive_candidate_kind(fake_anki):
 def test_grammar_candidate_kind(fake_anki):
     fake_anki.add(
         "Learn::Spanish::Grammar",
-        {"Text": "¡No {{c1::digas}}!", "Rule": "negative tú commands: yo form"},
+        {"Text": "¡No {{c1::digas}}!", "Rule": "yo form, drop -o, add -es/-as"},
         model=config.GRAMMAR_MODEL,
+        tags=["rule::negative_tú_commands"],
     )
     draft = {"id": "g1", "kind": "grammar", "rule_key": "negative tú commands"}
     assert [c.kind for c in find_candidates(Anki(transport=fake_anki), draft)] == ["grammar"]
@@ -56,3 +57,13 @@ def test_grammar_candidate_kind(fake_anki):
 
 def test_no_candidates_returns_empty(fake_anki):
     assert find_candidates(Anki(transport=fake_anki), vocab("chiveado")) == []
+
+
+def test_grammar_note_created_by_push_is_found(fake_anki):
+    import copy
+    from studyhelper.push import push
+    from test_drafts import GRAMMAR
+    anki = Anki(transport=fake_anki)
+    push(anki, {"drafts": [copy.deepcopy(GRAMMAR)], "dropped": []}, "spanish", already=set(), run_id="r1")
+    found = find_candidates(anki, {"id": "g9", "kind": "grammar", "rule_key": "Negative tú commands"})
+    assert [c.kind for c in found] == ["grammar"]
