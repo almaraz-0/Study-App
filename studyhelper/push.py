@@ -40,6 +40,8 @@ def push(anki: Anki, approved: dict, subject: str, already: set[str]) -> list[di
     if not todo:
         return []
     ensure_models(anki)
+    for deck in sorted({to_anki_note(d, subject)["deckName"] for d in todo if d["action"] == "add"}):
+        anki.invoke("createDeck", deck=deck)  # no-op when it exists; addNote fails on a missing deck
     results = []
     for d in todo:
         try:

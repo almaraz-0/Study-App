@@ -147,6 +147,8 @@ class FakeAnki:
     def _addNote(self, note):
         if note["modelName"] not in self.models:
             raise ValueError("model was not found")
+        if note["deckName"] not in self.decks:
+            raise ValueError("deck was not found: " + note["deckName"])
         nid, _ = self.add(note["deckName"], note["fields"], model=note["modelName"], tags=note.get("tags", []))
         return nid
 
