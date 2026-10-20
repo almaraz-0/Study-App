@@ -1,0 +1,32 @@
+{"subject": "spanish", "drafts": [
+ {"id": "v1", "kind": "vocab", "word": "chiveado", "meaning": "shy, bashful (Mexico)",
+  "sentence": "Al principio estaba un poco [chiveado], pero luego me solté.",
+  "sentence_en": "At first I was a bit shy, but then I loosened up.",
+  "tip": "Mexican, informal. Usually with <b>estar</b> or <b>ponerse</b>: me pongo chiveado. Lighter than tímido, which is a personality trait.",
+  "examples": [
+   {"es": "Cuando me presentaron a sus papás, me puse [chiveado].", "en": "When they introduced me to her parents, I got shy."},
+   {"es": "No te pongas [chiveada]; canta con nosotros.", "en": "Don't be shy; sing with us."},
+   {"es": "Los niños se quedaron [chiveados] frente a la cámara.", "en": "The kids got bashful in front of the camera."}],
+  "source": "Cómo me siento · emociones", "tags": ["emociones", "source::chatgpt"],
+  "recognize": true, "action": "add", "match_note_id": null, "flag": null},
+ {"id": "v2", "kind": "vocab", "word": "desbordado", "meaning": "overwhelmed beyond capacity, swamped",
+  "sentence": "Con dos proyectos a la vez, estoy [desbordado].",
+  "sentence_en": "With two projects at once, I'm completely swamped.",
+  "tip": "Literally 'overflowing' (a river se desborda). Stronger than <b>abrumado</b>: you're past your limit. Common with estar or sentirse.",
+  "examples": [
+   {"es": "El equipo de soporte está [desbordado] con tantas llamadas.", "en": "The support team is swamped with so many calls."},
+   {"es": "Me sentí [desbordada] por la noticia y me puse a llorar.", "en": "I was overwhelmed by the news and started crying."},
+   {"es": "El río se [desbordó] después de la tormenta.", "en": "The river overflowed after the storm."}],
+  "source": "Cómo me siento · emociones", "tags": ["emociones", "source::chatgpt"],
+  "recognize": true, "action": "add", "match_note_id": null, "flag": null},
+ {"id": "v3", "kind": "vocab", "word": "me dio vergüenza ajena", "meaning": "I felt secondhand embarrassment",
+  "sentence": "Su discurso en la boda [me dio vergüenza ajena].",
+  "sentence_en": "His wedding speech gave me secondhand embarrassment.",
+  "tip": "Pattern <b>dar vergüenza ajena</b>: the thing that embarrasses you is the subject (like gustar). Present: me da vergüenza ajena.",
+  "examples": [
+   {"es": "[Me da vergüenza ajena] ver esos videos de bromas.", "en": "Watching those prank videos makes me cringe."},
+   {"es": "¿No te [dio vergüenza ajena] cuando se cayó el micrófono?", "en": "Didn't you cringe when the mic fell?"},
+   {"es": "Esa escena [nos dio vergüenza ajena] a todos.", "en": "That scene made all of us cringe."}],
+  "source": "Cómo me siento · emociones", "tags": ["emociones", "source::chatgpt"],
+  "recognize": true, "action": "add", "match_note_id": null, "flag": null}
+]}

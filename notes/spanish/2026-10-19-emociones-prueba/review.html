@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Review cards</title>
+<style>
+/* One column of editable draft cards; sticky footer with the send button. */
+:root{
+  --bg:#f3f4f8; --surface:#fff; --ink:#1b1d33; --muted:#5d6180; --line:#dcdeea;
+  --accent:#d1006f; --accent-soft:#fbe3ef; --good:#13795b; --good-soft:#ddf3ea; --bad:#b42318; --bad-soft:#fde6e3; --info:#4a4fa3; --info-soft:#e9e9f7;
+  --sans:-apple-system,"Helvetica Neue",system-ui,sans-serif; --serif:"Iowan Old Style",Palatino,Georgia,serif; --mono:ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12131f; --surface:#1c1e2e; --ink:#ecedf6; --muted:#9ea2c0; --line:#2e3148;
+  --accent:#ff5ca8; --accent-soft:#3a1a2e; --good:#4ed3a2; --good-soft:#123227; --bad:#ff8a7a; --bad-soft:#3a1c1a; --info:#a9adf0; --info-soft:#25264a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12131f; --surface:#1c1e2e; --ink:#ecedf6; --muted:#9ea2c0; --line:#2e3148;
+  --accent:#ff5ca8; --accent-soft:#3a1a2e; --good:#4ed3a2; --good-soft:#123227; --bad:#ff8a7a; --bad-soft:#3a1c1a; --info:#a9adf0; --info-soft:#25264a; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 var(--serif);padding:0 16px}
+.wrap{max-width:720px;margin:0 auto;padding:28px 0 120px}
+h1{font:800 clamp(1.6rem,5vw,2.2rem)/1.1 var(--sans);margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 20px;font-size:.95rem}
+.d{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.d.dropped{opacity:.45}
+.d.err{border-color:var(--bad)}
+.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.title{font:700 1.3rem var(--sans)}
+.deck{font:500 .72rem var(--mono);color:var(--muted)}
+.badge{display:inline-block;font:500 .75rem var(--sans);border-radius:999px;padding:3px 10px;margin:8px 6px 0 0}
+.b-merge{background:var(--good-soft);color:var(--good)}.b-tag{background:var(--info-soft);color:var(--info)}.b-sense{background:var(--accent-soft);color:var(--accent)}.b-arch{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+label.f{display:block;margin-top:12px;font:500 .7rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+input[type=text],textarea{width:100%;font-family:var(--serif);text-transform:none;letter-spacing:normal;font-size:1rem;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);margin-top:4px}
+textarea{resize:vertical;min-height:2.6em;line-height:1.4}
+.ex{display:grid;gap:4px;margin-top:6px}
+.warn{color:var(--bad);font-size:.85rem;margin-top:4px}
+.toggle{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.toggle button{font:600 .85rem var(--sans);border:0;background:none;color:var(--muted);padding:6px 14px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.chk{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:.95rem}
+.chk input{accent-color:var(--accent);width:18px;height:18px}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px}
+.foot .in{max-width:720px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+button.primary{font:700 1rem var(--sans);background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.msg{padding:12px 14px;border-radius:10px;margin-bottom:14px;white-space:pre-line}.msg.good{background:var(--good-soft);color:var(--good)}.msg.bad{background:var(--bad-soft);color:var(--bad)}
+.hint{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Review cards</h1>
+  <p class="sub">Edit anything, drop what you don't want. Nothing goes into Anki until you press send. Mark the target word in sentences with [brackets].</p>
+  <div id="status"></div>
+  <div id="list"></div>
+</div>
+<div class="foot"><div class="in"><span class="hint" id="count"></span><button class="primary" id="send"></button></div></div>
+<script id="data" type="application/json">{"subject": "spanish", "drafts": [{"id": "v1", "kind": "vocab", "word": "chiveado", "meaning": "shy, bashful (Mexico)", "sentence": "Al principio estaba un poco [chiveado], pero luego me solté.", "sentence_en": "At first I was a bit shy, but then I loosened up.", "tip": "Mexican, informal. Usually with <b>estar<\/b> or <b>ponerse<\/b>: me pongo chiveado. Lighter than tímido, which is a personality trait.", "examples": [{"es": "Cuando me presentaron a sus papás, me puse [chiveado].", "en": "When they introduced me to her parents, I got shy."}, {"es": "No te pongas [chiveada]; canta con nosotros.", "en": "Don't be shy; sing with us."}, {"es": "Los niños se quedaron [chiveados] frente a la cámara.", "en": "The kids got bashful in front of the camera."}], "source": "Cómo me siento · emociones", "tags": ["emociones", "source::chatgpt"], "recognize": true, "action": "add", "match_note_id": null, "flag": null}, {"id": "v2", "kind": "vocab", "word": "desbordado", "meaning": "overwhelmed beyond capacity, swamped", "sentence": "Con dos proyectos a la vez, estoy [desbordado].", "sentence_en": "With two projects at once, I'm completely swamped.", "tip": "Literally 'overflowing' (a river se desborda). Stronger than <b>abrumado<\/b>: you're past your limit. Common with estar or sentirse.", "examples": [{"es": "El equipo de soporte está [desbordado] con tantas llamadas.", "en": "The support team is swamped with so many calls."}, {"es": "Me sentí [desbordada] por la noticia y me puse a llorar.", "en": "I was overwhelmed by the news and started crying."}, {"es": "El río se [desbordó] después de la tormenta.", "en": "The river overflowed after the storm."}], "source": "Cómo me siento · emociones", "tags": ["emociones", "source::chatgpt"], "recognize": true, "action": "add", "match_note_id": null, "flag": null}, {"id": "v3", "kind": "vocab", "word": "me dio vergüenza ajena", "meaning": "I felt secondhand embarrassment", "sentence": "Su discurso en la boda [me dio vergüenza ajena].", "sentence_en": "His wedding speech gave me secondhand embarrassment.", "tip": "Pattern <b>dar vergüenza ajena<\/b>: the thing that embarrasses you is the subject (like gustar). Present: me da vergüenza ajena.", "examples": [{"es": "[Me da vergüenza ajena] ver esos videos de bromas.", "en": "Watching those prank videos makes me cringe."}, {"es": "¿No te [dio vergüenza ajena] cuando se cayó el micrófono?", "en": "Didn't you cringe when the mic fell?"}, {"es": "Esa escena [nos dio vergüenza ajena] a todos.", "en": "That scene made all of us cringe."}], "source": "Cómo me siento · emociones", "tags": ["emociones", "source::chatgpt"], "recognize": true, "action": "add", "match_note_id": null, "flag": null}]}</script>
+<script>
+const data = JSON.parse(document.getElementById('data').textContent);
+const drafts = data.drafts.map(d => JSON.parse(JSON.stringify(d)));
+const keep = Object.fromEntries(drafts.map(d => [d.id, true]));
+const list = document.getElementById('list');
+const send = document.getElementById('send');
+const status = document.getElementById('status');
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) n.append(k);
+  return n;
+}
+const markers = s => (s.match(/\[[^\[\]]+\]/g) || []).length;
+
+function field(label, get, set, {area = false, check} = {}) {
+  const input = el(area ? 'textarea' : 'input', area ? {lang: 'es'} : {type: 'text', lang: 'es'});
+  input.value = get() ?? '';
+  const warn = el('div', {class: 'warn'});
+  const validate = () => { warn.textContent = check ? (check(input.value) || '') : ''; };
+  input.addEventListener('input', () => { set(input.value); validate(); });
+  validate();
+  return el('div', {}, el('label', {class: 'f'}, label, input), warn);
+}
+const oneMarker = v => markers(v) === 1 ? '' : 'Needs exactly one [target] word in brackets.';
+
+function badges(d) {
+  const out = [];
+  if (d.action === 'merge') out.push(el('span', {class: 'badge b-merge', text: 'Already in Anki: adds this example to it'}));
+  if (d.action === 'tag_only') out.push(el('span', {class: 'badge b-tag', text: 'Matches an old card: only adds a tag'}));
+  if (d.flag === 'new_sense') out.push(el('span', {class: 'badge b-sense', text: 'Same word, different meaning'}));
+  if (d.flag === 'archive_match') out.push(el('span', {class: 'badge b-arch', text: 'Also in your archive'}));
+  return out;
+}
+
+function card(d) {
+  const box = el('div', {class: 'd', id: 'd-' + d.id});
+  const tog = el('div', {class: 'toggle'});
+  const kb = el('button', {text: 'Keep'}), db = el('button', {text: 'Drop'});
+  const sync = () => { kb.setAttribute('aria-pressed', keep[d.id]); db.setAttribute('aria-pressed', !keep[d.id]); box.classList.toggle('dropped', !keep[d.id]); updateCount(); };
+  kb.onclick = () => { keep[d.id] = true; sync(); };
+  db.onclick = () => { keep[d.id] = false; sync(); };
+  tog.append(kb, db);
+  const title = d.kind === 'vocab' ? d.word : d.rule_key;
+  box.append(el('div', {class: 'head'},
+    el('div', {}, el('div', {class: 'title', text: title}), el('div', {class: 'deck', text: d.kind === 'vocab' ? 'Vocab' : 'Grammar'})), tog),
+    el('div', {}, ...badges(d)));
+  const tagsField = field('Tags (comma separated)', () => (d.tags || []).join(', '), v => d.tags = v.split(',').map(t => t.trim()).filter(Boolean));
+  if (d.kind === 'vocab') {
+    box.append(
+      field('Word', () => d.word, v => d.word = v),
+      field('Meaning', () => d.meaning, v => d.meaning = v),
+      field('Sentence (front shows it with the word blanked)', () => d.sentence, v => d.sentence = v, {area: true, check: oneMarker}),
+      field('Sentence in English', () => d.sentence_en, v => d.sentence_en = v),
+      field('Tip', () => d.tip, v => d.tip = v, {area: true}));
+    const ex = el('div', {}, el('label', {class: 'f', text: 'Examples'}));
+    d.examples.forEach((e, i) => ex.append(el('div', {class: 'ex'},
+      field(`${i + 1}. Spanish`, () => e.es, v => e.es = v, {check: oneMarker}),
+      field(`${i + 1}. English`, () => e.en, v => e.en = v))));
+    const rec = el('input', {type: 'checkbox'});
+    rec.checked = d.recognize !== false;
+    rec.onchange = () => d.recognize = rec.checked;
+    box.append(ex, tagsField, el('label', {class: 'chk'}, rec, 'Also make the Spanish → meaning card'));
+  } else {
+    box.append(
+      field('Sentences (cloze)', () => d.text, v => d.text = v, {area: true, check: v => v.includes('{{c1::') ? '' : 'Needs at least one {{c1::answer::hint}} blank.'}),
+      field('Rule', () => d.rule, v => d.rule = v, {area: true}),
+      field('Reference', () => d.reference, v => d.reference = v),
+      tagsField);
+  }
+  sync();
+  return box;
+}
+
+function updateCount() {
+  const n = drafts.filter(d => keep[d.id]).length;
+  send.textContent = `Send ${n} card${n === 1 ? '' : 's'} to Anki`;
+  document.getElementById('count').textContent = `${drafts.length - n} dropped`;
+  send.disabled = false;
+}
+
+drafts.forEach(d => list.append(card(d)));
+updateCount();
+
+send.addEventListener('click', async () => {
+  send.disabled = true;
+  document.querySelectorAll('.d.err').forEach(n => n.classList.remove('err'));
+  const body = {drafts: drafts.filter(d => keep[d.id]), dropped: drafts.filter(d => !keep[d.id]).map(d => d.id)};
+  try {
+    const r = await fetch('/submit', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+    const out = await r.json();
+    if (!r.ok) {
+      (out.errors || []).forEach(e => document.getElementById('d-' + e.split(':')[0])?.classList.add('err'));
+      status.replaceChildren(el('div', {class: 'msg bad', text: 'Fix these first:\n' + (out.errors || [r.statusText]).join('\n')}));
+      send.disabled = false;
+      window.scrollTo({top: 0, behavior: 'smooth'});
+      return;
+    }
+    status.replaceChildren(el('div', {class: 'msg good', text: `Sent ${body.drafts.length} cards. Head back to Claude.`}));
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  } catch (e) {
+    send.disabled = false;
+    status.replaceChildren(el('div', {class: 'msg bad', text: 'Couldn’t reach Claude’s helper. This saved copy can’t send; run /study again.'}));
+  }
+});
+</script>
+</body>
+</html>

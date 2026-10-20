@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "subject": "spanish",
+  "date": "2026-10-19",
+  "slug": "emociones-prueba",
+  "path": "direct",
+  "source": {
+    "type": "chatgpt",
+    "label": "Emotion words (Cómo me siento)",
+    "url": null
+  },
+  "items": [
+    {
+      "key": "chiveado",
+      "summary": "shy, bashful (Mexico)",
+      "carded": false
+    },
+    {
+      "key": "desbordado",
+      "summary": "overwhelmed beyond capacity, swamped",
+      "carded": true
+    },
+    {
+      "key": "me dio vergüenza ajena",
+      "summary": "I felt secondhand embarrassment",
+      "carded": true
+    }
+  ],
+  "quiz": null,
+  "cards": [
+    {
+      "draft_id": "v2",
+      "note_id": 1792464306225,
+      "action": "add"
+    },
+    {
+      "draft_id": "v3",
+      "note_id": 1792464306273,
+      "action": "add"
+    }
+  ]
+}
