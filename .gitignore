@@ -5,3 +5,5 @@ backups/
 notes/**/screenshots/
 __pycache__/
 .playwright-mcp/
+notes/**/.push.lock
+notes/**/*.tmp
