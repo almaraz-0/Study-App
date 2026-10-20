@@ -1,0 +1,19 @@
+[project]
+name = "studyhelper"
+version = "0.1.0"
+description = "Turn what you study into reviewed Anki cards"
+requires-python = ">=3.12"
+dependencies = ["youtube-transcript-api>=1.0"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["uv_build>=0.8,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
